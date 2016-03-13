@@ -1,0 +1,7 @@
+{
+  "name": "speaker",
+  "eventsEmitted": ["findAllService",
+    "findServiceById",
+    "findServiceByName",
+    "findExecutorByIdAndServiceId"]
+}
