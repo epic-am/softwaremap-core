@@ -1,0 +1,12 @@
+{
+  "name": "scribe",
+  "eventsEmitted": [
+    "createService",
+    "createExecutor",
+    "updateService",
+    "updateExecutor",
+    "deleteService",
+    "deleteExecutor",
+    "findServiceByName",
+    "findServiceById"]
+}
