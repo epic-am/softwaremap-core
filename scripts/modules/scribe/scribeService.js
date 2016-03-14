@@ -73,7 +73,7 @@ ScribeService.prototype.updateService = function (req, res) {
 
 ScribeService.prototype.deleteService = function (req, res) {
   this.logger.info("deleteService");
-  if (this.isServiceIdExist(req.params.serviceId) !== null) {
+  if (this.isServiceIdExist(req.params.serviceId)) {
     this.emit("deleteService", {
       serviceId: req.params.serviceId,
       cb: function () {
@@ -150,12 +150,12 @@ ScribeService.prototype.isServiceIdExist = function (serviceId) {
     },
     cb: function (value) {
       if (value === null) {
-        return false;
+        res = false;
+      } else {
+        res = true;
       }
-      res = true;
-    }.bind(this)
+    }
   });
-
   return res;
 };
 
