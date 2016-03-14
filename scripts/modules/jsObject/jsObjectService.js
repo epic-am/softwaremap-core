@@ -142,7 +142,7 @@ JsObjectService.prototype.findServiceByName = function (serviceName) {
 
 JsObjectService.prototype.findServiceById = function (serviceId) {
   var service = this.services.get(parseInt(serviceId, 10));
-  if (service !== null) {
+  if (service !== undefined) {
     return service;
   }
   return null;
