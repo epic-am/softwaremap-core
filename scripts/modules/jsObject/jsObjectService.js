@@ -111,7 +111,6 @@ JsObjectService.prototype.updateExecutorMetadata = function (serviceId, executor
   var service = this.services.get(parseInt(serviceId, 10));
   service.executors.forEach(function (executor) {
     if (executor.id === +executorId) {
-      console.log(executor.metadata, metadata);
       executor.metadata = _.assignIn(executor.metadata, metadata);
     }
   });
