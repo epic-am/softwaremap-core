@@ -60,6 +60,10 @@ JsObjectService.prototype.listeningEvents = function () {
     obj.cb(this.findExecutorByIdAndServiceId(obj.parameters.executorId, obj.parameters.serviceId));
   }.bind(this));
 
+  this.hub.on("findExecutorByNameAndServiceId", function (obj) {
+    obj.cb(this.findExecutorByNameAndServiceId(obj.parameters.executorName, obj.parameters.serviceId));
+  }.bind(this));
+
   this.hub.on("getResource", function (obj) {
     obj.cb(this.getResource(obj.parameters));
   }.bind(this));
@@ -155,6 +159,20 @@ JsObjectService.prototype.findExecutorByIdAndServiceId = function (executorId, s
   if (service !== null) {
     service.executors.forEach( (executor) => {
       if (executor.id === parseInt(executorId, 10)) {
+        resExecutor = executor;
+      }
+    });
+  }
+  return resExecutor;
+};
+
+JsObjectService.prototype.findExecutorByNameAndServiceId = function (executorName, serviceId) {
+  var service = this.services.get(parseInt(serviceId, 10));
+  var resExecutor = null;
+
+  if (service !== null) {
+    service.executors.forEach( (executor) => {
+      if (executor.name === executorName) {
         resExecutor = executor;
       }
     });
