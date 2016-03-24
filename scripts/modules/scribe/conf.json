@@ -8,5 +8,6 @@
     "deleteService",
     "deleteExecutor",
     "findServiceByName",
-    "findServiceById"]
+    "findServiceById",
+    "findExecutorByNameAndServiceId"]
 }

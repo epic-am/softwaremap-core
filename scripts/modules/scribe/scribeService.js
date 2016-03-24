@@ -36,7 +36,8 @@ ScribeService.prototype.addService = function (req, res) {
   this.logger.info("addService");
   // Verification des parametres de la requete
   // Verification de l'existence du service qu'on veut
-  if (!this.isServiceExist(req.body.name)) {
+  var service = this.isServiceExist(req.body.name);
+  if (!service) {
     this.emit("createService", {
       params: req.body,
       cb: function (value) {
@@ -45,8 +46,8 @@ ScribeService.prototype.addService = function (req, res) {
     });
   } else {
     res.status(HttpStatus.CONFLICT).send({
-		    error: HttpStatus.getStatusText(HttpStatus.CONFLICT),
-        message: "Service already exist"
+        message: "Service already exist",
+        serviceId: service
     });
   }
 };
@@ -88,14 +89,21 @@ ScribeService.prototype.deleteService = function (req, res) {
 
 ScribeService.prototype.addExecutorsToService = function (req, res) {
   this.logger.info("addExecutorsToService");
-  this.emit("createExecutor", {
-    serviceId: req.params.serviceId,
-    executor: req.body,
-    cb: function (value) {
-      res.status(HttpStatus.OK).send(value);
-    }
-  });
-
+  var executor = this.isExecutorExistOnService(req.params.serviceId, req.body.name);
+  if (!executor) {
+    this.emit("createExecutor", {
+      serviceId: req.params.serviceId,
+      executor: req.body,
+      cb: function (value) {
+        res.status(HttpStatus.OK).send(value);
+      }
+    });
+  } else {
+    res.status(HttpStatus.CONFLICT).send({
+        message: "Executor already exist",
+        executorId: executor.id
+    });
+  }
 };
 
 ScribeService.prototype.updateExecutorToService = function (req, res) {
@@ -134,7 +142,7 @@ ScribeService.prototype.isServiceExist = function (serviceName) {
       if (value === null) {
         return false;
       }
-      res = true;
+      res = value;
     }.bind(this)
   });
 
@@ -149,13 +157,27 @@ ScribeService.prototype.isServiceIdExist = function (serviceId) {
       serviceId: serviceId
     },
     cb: function (value) {
-      if (value === null) {
-        res = false;
-      } else {
-        res = true;
-      }
+      res = value;
     }
   });
+  return res;
+};
+
+ScribeService.prototype.isExecutorExistOnService = function (serviceId, executorName) {
+  var res = false;
+  this.emit("findExecutorByNameAndServiceId", {
+    parameters: {
+      executorName: executorName,
+      serviceId: serviceId,
+    },
+    cb: function (value) {
+      if (value === null) {
+        return false;
+      }
+      res = value;
+    }.bind(this)
+  });
+
   return res;
 };
 
