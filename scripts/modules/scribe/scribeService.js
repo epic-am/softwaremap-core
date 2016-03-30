@@ -38,8 +38,15 @@ ScribeService.prototype.addService = function (req, res) {
   // Verification de l'existence du service qu'on veut
   var service = this.isServiceExist(req.body.name);
   if (!service) {
-    this.emit("createService", {
-      params: req.body,
+    this.emit("create", {
+      index: "service",
+      type: "service",
+      params: {
+        name: req.body.name,
+        type: req.body.type,
+        metadata: req.body.metadata,
+        executors: req.body.executors || [],
+      },
       cb: function (value) {
         res.status(HttpStatus.OK).send(value);
       }.bind(this)
@@ -55,7 +62,9 @@ ScribeService.prototype.addService = function (req, res) {
 ScribeService.prototype.updateService = function (req, res) {
   this.logger.info("updateService");
   if (!this.isServiceExist(req.body.name)) {
-    this.emit("updateService", {
+    this.emit("update", {
+      index: "service",
+      type: "service",
       parameters: {
         serviceId: req.params.serviceId,
         metadata: req.body.metadata
@@ -75,8 +84,12 @@ ScribeService.prototype.updateService = function (req, res) {
 ScribeService.prototype.deleteService = function (req, res) {
   this.logger.info("deleteService");
   if (this.isServiceIdExist(req.params.serviceId)) {
-    this.emit("deleteService", {
-      serviceId: req.params.serviceId,
+    this.emit("delete", {
+      index: "service",
+      type: "service",
+      params: {
+        serviceId: req.params.serviceId
+      },
       cb: function () {
         res.status(HttpStatus.NO_CONTENT);
       }.bind(this)
@@ -91,9 +104,13 @@ ScribeService.prototype.addExecutorsToService = function (req, res) {
   this.logger.info("addExecutorsToService");
   var executor = this.isExecutorExistOnService(req.params.serviceId, req.body.name);
   if (!executor) {
-    this.emit("createExecutor", {
-      serviceId: req.params.serviceId,
-      executor: req.body,
+    this.emit("create", {
+      index: "service",
+      type: "executor",
+      params: {
+        serviceId: req.params.serviceId,
+        executor: req.body,
+      },
       cb: function (value) {
         res.status(HttpStatus.OK).send(value);
       }
@@ -108,10 +125,14 @@ ScribeService.prototype.addExecutorsToService = function (req, res) {
 
 ScribeService.prototype.updateExecutorToService = function (req, res) {
   this.logger.info("updateExecutorToService");
-  this.emit("updateExecutor", {
-    serviceId: req.params.serviceId,
-    executorId: req.params.executorId,
-    metadata: req.body,
+  this.emit("update", {
+    index: "service",
+    type: "executor",
+    params: {
+      serviceId: req.params.serviceId,
+      executorId: req.params.executorId,
+      metadata: req.body
+    },
     cb: function (value) {
       res.status(HttpStatus.OK).send('updateExecutorToService');
     }
@@ -120,9 +141,13 @@ ScribeService.prototype.updateExecutorToService = function (req, res) {
 
 ScribeService.prototype.deleteExecutorToService = function (req, res) {
   this.logger.info("deleteExecutorToService");
-  this.emit("deleteExecutor", {
-    serviceId: req.params.serviceId,
-    executorId: req.params.executorId,
+  this.emit("delete", {
+    index: "service",
+    type: "executor",
+    params: {
+      serviceId: req.params.serviceId,
+      executorId: req.params.executorId,
+    },
     cb: function (value) {
       if (value) {
         res.status(HttpStatus.NO_CONTENT);
@@ -136,8 +161,12 @@ ScribeService.prototype.deleteExecutorToService = function (req, res) {
 
 ScribeService.prototype.isServiceExist = function (serviceName) {
   var res = false;
-  this.emit("findServiceByName", {
-    serviceName: serviceName,
+  this.emit("find", {
+    index: "service",
+    type: "service",
+    params : {
+      serviceName: serviceName
+    },
     cb: function (value) {
       if (value === null) {
         return false;
@@ -152,8 +181,10 @@ ScribeService.prototype.isServiceExist = function (serviceName) {
 ScribeService.prototype.isServiceIdExist = function (serviceId) {
   var res = false;
 
-  this.emit("findServiceById", {
-    parameters: {
+  this.emit("find", {
+    index: "service",
+    type: "service",
+    params: {
       serviceId: serviceId
     },
     cb: function (value) {
@@ -165,8 +196,10 @@ ScribeService.prototype.isServiceIdExist = function (serviceId) {
 
 ScribeService.prototype.isExecutorExistOnService = function (serviceId, executorName) {
   var res = false;
-  this.emit("findExecutorByNameAndServiceId", {
-    parameters: {
+  this.emit("find", {
+    index: 'service',
+    type: 'executor',
+    params: {
       executorName: executorName,
       serviceId: serviceId,
     },

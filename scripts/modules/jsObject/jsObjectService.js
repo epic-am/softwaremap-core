@@ -15,115 +15,160 @@ var JsObjectService = function (hub, router) {
 
 JsObjectService.prototype.initialize = function () {
   this.logger.info("initialize");
-  this.services = new HashMap();
+  this.indexes = new HashMap();
   this.listeningEvents();
 };
 
 JsObjectService.prototype.listeningEvents = function () {
-  this.hub.on("createService", function (obj) {
-    obj.cb(this.addService(obj.params));
+  this.hub.on("create", function (obj) {
+    obj.cb(this.createElement(obj.index, obj.type, obj.params));
   }.bind(this));
 
-  this.hub.on("deleteService", function (obj) {
-    obj.cb(this.deleteService(obj.serviceId));
+  this.hub.on("delete", function (obj) {
+    obj.cb(this.deleteElement(obj.index, obj.type, obj.params));
   }.bind(this));
 
-  this.hub.on("createExecutor", function (obj) {
-    obj.cb(this.addExecutorsToService(obj.serviceId, obj.executor));
+  this.hub.on("update", function (obj) {
+    obj.cb(this.updateElement(obj.index, obj.type, obj.params));
   }.bind(this));
 
-  this.hub.on("updateService", function (obj) {
-    obj.cb(this.updateService(obj.parameters.serviceId, obj.parameters.metadata));
-  }.bind(this));
-
-  this.hub.on("updateExecutor", function (obj) {
-    obj.cb(this.updateExecutorMetadata(obj.serviceId, obj.executorId, obj.metadata));
-  }.bind(this));
-
-  this.hub.on("deleteExecutor", function (obj) {
-    obj.cb(this.deleteExecutor(obj.serviceId, obj.executorId));
-  }.bind(this));
-
-  this.hub.on("findAllService", function (obj) {
-    obj.cb(this.findAllService());
-  }.bind(this));
-
-  this.hub.on("findServiceByName", function (obj) {
-    obj.cb(this.findServiceByName(obj.serviceName));
-  }.bind(this));
-
-  this.hub.on("findServiceById", function (obj) {
-    obj.cb(this.findServiceById(obj.parameters.serviceId));
-  }.bind(this));
-
-  this.hub.on("findExecutorByIdAndServiceId", function (obj) {
-    obj.cb(this.findExecutorByIdAndServiceId(obj.parameters.executorId, obj.parameters.serviceId));
-  }.bind(this));
-
-  this.hub.on("findExecutorByNameAndServiceId", function (obj) {
-    obj.cb(this.findExecutorByNameAndServiceId(obj.parameters.executorName, obj.parameters.serviceId));
-  }.bind(this));
-
-  this.hub.on("getResource", function (obj) {
-    obj.cb(this.getResource(obj.parameters));
+  this.hub.on("find", function (obj) {
+    obj.cb(this.findElement(obj.index, obj.type, obj.params));
   }.bind(this));
 };
 
+JsObjectService.prototype.createElement = function(index, type, params) {
+  var res = {};
+  if (type === "service") {
+    res = this.addService(index, params);
+  } else if (type === "executor") {
+    res = this.addExecutorsToService(index, params);
+  }
+
+  return res;
+};
+
+JsObjectService.prototype.deleteElement = function (index, type, params) {
+  var res = false;
+  if (type === "service") {
+    this.deleteService(index, params.serviceId);
+  } else if (type === "executor") {
+    this.deleteExecutorToService(index, params);
+  }
+
+  return res;
+};
+
+JsObjectService.prototype.updateElement = function (index, type, params) {
+  var res = false;
+
+  if (type === "service") {
+    res = this.updateService(index, params);
+  } else if (type === "executor") {
+    res = this.updateExecutorToService(index, params);
+  }
+};
+
+JsObjectService.prototype.findElement = function (index, type, params) {
+  var res = [];
+  if (type === "service") {
+    res = this.findService(index, params);
+  } else if (type === "executor") {
+    res = this.findExecutor(index, params);
+  }
+  return res;
+};
+
+JsObjectService.prototype.findService = function (index, params) {
+  var serviceKeys = Object.keys(params);
+
+  if (_.includes(serviceKeys, "serviceId") && serviceKeys.length === 1) {
+    return this.findServiceById(index, params.serviceId);
+  } else if (_.includes(serviceKeys, "serviceName") && serviceKeys.length === 1) {
+    return this.findServiceByName(index, params.serviceName);
+  } else {
+    return this.findAllService(index);
+  }
+};
+
+JsObjectService.prototype.findExecutor = function (index, params) {
+  var serviceKeys = Object.keys(params);
+
+  if (_.includes(serviceKeys, "serviceId") && serviceKeys.length === 1) {
+    return this.findServiceByIdExecutors(index, params.serviceId);
+  } else if (_.includes(serviceKeys, "serviceId") && (_.includes(serviceKeys, "executorId")) && serviceKeys.length === 2) {
+    return this.findExecutorByIdAndServiceId(index, params.serviceName);
+  } else if (_.includes(serviceKeys, "serviceId") && (_.includes(serviceKeys, "executorName")) && serviceKeys.length === 2) {
+    return this.findExecutorByNameAndServiceId(index, params.executorName, params.serviceId);
+  }else {
+    return this.findAllService(index);
+  }
+};
 /**
  * Add service on hashmap
  * Return : Object with id and service
 */
-JsObjectService.prototype.addService = function (params) {
+JsObjectService.prototype.addService = function (index, params) {
   var executors = [];
   this.resourceId++;
 
-  this.services.set(this.resourceId, {
-    name: params.name,
-    metadata: params.metadata,
-    executors: executors
-  });
+  var hashmap = null;
+  if (this.indexes.has(index)) {
+    hashmap = this.indexes.get(index);
+    hashmap.set(this.resourceId, params);
+  } else {
+    hashmap = new HashMap();
+    hashmap.set(this.resourceId, params);
+    this.indexes.set(index, hashmap);
+  }
 
   return {
     id: this.resourceId,
-    executors: []
+    element: params
   };
 };
 
-JsObjectService.prototype.deleteService = function (serviceId) {
-  this.services.remove(parseInt(serviceId, 10));
+JsObjectService.prototype.deleteService = function (index, serviceId) {
+  this.indexes.get(index).remove(parseInt(serviceId, 10));
 };
 
-JsObjectService.prototype.updateService = function (serviceId, metadata) {
-  var service = this.services.get(parseInt(serviceId, 10));
-  service.metadata = _.assignIn(service.metadata, metadata);
+JsObjectService.prototype.updateService = function (index, params) {
+  var service = this.indexes.get(index).get(parseInt(params.serviceId, 10));
+  service.metadata = _.assignIn(service.metadata, params.metadata);
 };
 
-JsObjectService.prototype.addExecutorsToService = function (serviceId, executor) {
-  var service = this.services.get(parseInt(serviceId, 10));
+JsObjectService.prototype.addExecutorsToService = function (index, params) {
+  var service = this.indexes.get(index).get(parseInt(params.serviceId, 10));
   service.executors.push({
     id: ++this.resourceId,
-    name: executor.name,
-    metadata: executor.metadata
+    name: params.executor.name,
+    metadata: params.executor.metadata
   });
-  this.services.set(parseInt(serviceId, 10), service);
+  this.indexes.get(index).set(parseInt(params.serviceId, 10), service);
   return {
     id: this.resourceId
   };
 };
 
-JsObjectService.prototype.updateExecutorMetadata = function (serviceId, executorId, metadata) {
-  var service = this.services.get(parseInt(serviceId, 10));
+JsObjectService.prototype.updateExecutorToService = function (index, params) {
+  var serviceId = params.serviceId;
+  var executorId = params.executorId;
+  var metadata = params.metadata;
+
+  var service = this.indexes.get(index).get(parseInt(serviceId, 10));
   service.executors.forEach(function (executor) {
     if (executor.id === +executorId) {
       executor.metadata = _.assignIn(executor.metadata, metadata);
     }
   });
-  this.services.set(parseInt(serviceId, 10), service);
+  this.indexes.get(index).set(parseInt(serviceId, 10), service);
 };
 
-JsObjectService.prototype.deleteExecutor = function (serviceId, executorId) {
+JsObjectService.prototype.deleteExecutorToService = function (index, params) {
   var res = false;
-  var service = this.services.get(parseInt(serviceId, 10));
+  var serviceId = params.serviceId;
+  var executorId = params.executorId;
+  var service = this.indexes.get(index).get(+serviceId);
   for (var i = 0; i < service.executors.length; i++) {
     if (service.executors[i].id === +executorId) {
       service.executors.splice(i, 1);
@@ -133,19 +178,22 @@ JsObjectService.prototype.deleteExecutor = function (serviceId, executorId) {
   return res;
 };
 
-JsObjectService.prototype.findServiceByName = function (serviceName) {
+JsObjectService.prototype.findServiceByName = function (index, serviceName) {
   var res = null;
-  this.services.forEach(function (value, key) {
-    if (value.name === serviceName) {
-      res = key;
-    }
-  });
+  var indexHash = this.indexes.get(index);
+  if (indexHash) {
+    indexHash.forEach(function (value, key) {
+      if (value.name === serviceName) {
+        res = key;
+      }
+    });
+  }
 
   return res;
 };
 
-JsObjectService.prototype.findServiceById = function (serviceId) {
-  var service = this.services.get(parseInt(serviceId, 10));
+JsObjectService.prototype.findServiceById = function (index, serviceId) {
+  var service = this.indexes.get(index).get(+serviceId);
   if (service !== undefined) {
     return service;
   }
@@ -153,7 +201,7 @@ JsObjectService.prototype.findServiceById = function (serviceId) {
 };
 
 JsObjectService.prototype.findExecutorByIdAndServiceId = function (executorId, serviceId) {
-  var service = this.services.get(parseInt(serviceId, 10));
+  var service = this.indexes.get(index).get(+serviceId);
   var resExecutor = null;
 
   if (service !== null) {
@@ -166,8 +214,8 @@ JsObjectService.prototype.findExecutorByIdAndServiceId = function (executorId, s
   return resExecutor;
 };
 
-JsObjectService.prototype.findExecutorByNameAndServiceId = function (executorName, serviceId) {
-  var service = this.services.get(parseInt(serviceId, 10));
+JsObjectService.prototype.findExecutorByNameAndServiceId = function (index, executorName, serviceId) {
+  var service = this.indexes.get(index).get(parseInt(serviceId, 10));
   var resExecutor = null;
 
   if (service !== null) {
@@ -180,18 +228,18 @@ JsObjectService.prototype.findExecutorByNameAndServiceId = function (executorNam
   return resExecutor;
 };
 
-JsObjectService.prototype.findAllService = function (parameters) {
+JsObjectService.prototype.findAllService = function (index, type) {
   var res = [];
-
-  this.services.forEach( (value, key) => {
+  var services = this.indexes.get(index);
+  services.forEach( (value, key) => {
     res.push({
       id: key,
       name: value.name,
+      type: value.type,
       metadata: value.metadata,
       executors: value.executors
     });
   });
-
   return res;
 };
 

@@ -31,9 +31,10 @@ SpeakerService.prototype.initRoutes = function () {
 };
 
 SpeakerService.prototype.getAllServices = function (req, res) {
-  this.emit("findAllService", {
-    parameters: {
-    },
+  this.emit("find", {
+    index: "service",
+    type: "service",
+    params: {},
     cb: function (value) {
       this.resClient(res, "service", value);
     }.bind(this)
@@ -41,8 +42,10 @@ SpeakerService.prototype.getAllServices = function (req, res) {
 };
 
 SpeakerService.prototype.getServiceById = function (req, res) {
-  this.emit("findServiceById", {
-    parameters: {
+  this.emit("find", {
+    index: "service",
+    type: "service",
+    params: {
       serviceId: req.params.serviceId
     },
     cb: function (value) {
@@ -54,8 +57,10 @@ SpeakerService.prototype.getServiceById = function (req, res) {
 };
 
 SpeakerService.prototype.getServiceByIdExecutors = function (req, res) {
-  this.emit("findServiceById", {
-    parameters: {
+  this.emit("find", {
+    index: "service",
+    type: "service",
+    params: {
       serviceId: req.params.serviceId
     },
     cb: function (value) {
@@ -67,8 +72,10 @@ SpeakerService.prototype.getServiceByIdExecutors = function (req, res) {
 };
 
 SpeakerService.prototype.getServiceByIdAndExecutorById = function (req, res) {
-  this.emit("findExecutorByIdAndServiceId", {
-    parameters: {
+  this.emit("find", {
+    index: "service",
+    type: "executor",
+    params: {
       serviceId: req.params.serviceId,
       executorId: req.params.executorId
     },
