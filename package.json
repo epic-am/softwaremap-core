@@ -20,7 +20,7 @@
     "config": "^1.19.0",
     "express": "^4.13.4",
     "hashmap": "^2.0.4",
-    "http-status-code": "^1.0.6",
+    "http-status-codes": "^1.0.6",
     "json-api-serializer": "^0.1.2",
     "lodash": "^4.6.1",
     "log4js": "^0.6.31"
