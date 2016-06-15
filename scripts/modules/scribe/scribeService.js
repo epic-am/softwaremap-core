@@ -36,7 +36,7 @@ ScribeService.prototype.addService = function (req, res) {
   this.logger.info("addService");
   // Verification des parametres de la requete
   // Verification de l'existence du service qu'on veut
-  var service = this.isServiceExist(req.body.name);
+  var service = this.isServiceExist(req.body.name, req.body.type, req.body.env);
   if (!service) {
     this.emit("create", {
       index: "service",
@@ -62,7 +62,7 @@ ScribeService.prototype.addService = function (req, res) {
 
 ScribeService.prototype.updateService = function (req, res) {
   this.logger.info("updateService");
-  if (!this.isServiceExist(req.body.name)) {
+  if (!this.isServiceIdExist(req.params.serviceId)) {
     this.emit("update", {
       index: "service",
       type: "service",
@@ -160,13 +160,15 @@ ScribeService.prototype.deleteExecutorToService = function (req, res) {
   res.send('deleteExecutorToService');
 };
 
-ScribeService.prototype.isServiceExist = function (serviceName) {
+ScribeService.prototype.isServiceExist = function (serviceName, serviceType, serviceEnv) {
   var res = false;
   this.emit("find", {
     index: "service",
     type: "service",
     params : {
-      serviceName: serviceName
+      serviceName: serviceName,
+      serviceType: serviceType,
+      serviceEnv: serviceEnv
     },
     cb: function (value) {
       if (value === null) {

@@ -86,6 +86,8 @@ JsObjectService.prototype.findService = function (index, params) {
     return this.findServiceById(index, params.serviceId);
   } else if (_.includes(serviceKeys, "serviceName") && serviceKeys.length === 1) {
     return this.findServiceByName(index, params.serviceName);
+  } else if (_.includes(serviceKeys, "serviceName") && _.includes(serviceKeys, "serviceType") && _.includes(serviceKeys, "serviceEnv") && serviceKeys.length === 3) {
+    return this.findServiceByNameAndTypeAndEnv(index, params.serviceName, params.serviceType, params.serviceEnv);
   } else {
     return this.findAllService(index);
   }
@@ -184,6 +186,20 @@ JsObjectService.prototype.findServiceByName = function (index, serviceName) {
   if (indexHash) {
     indexHash.forEach(function (value, key) {
       if (value.name === serviceName) {
+        res = key;
+      }
+    });
+  }
+
+  return res;
+};
+
+JsObjectService.prototype.findServiceByNameAndTypeAndEnv = function (index, serviceName, serviceType, serviceEnv) {
+  var res = null;
+  var indexHash = this.indexes.get(index);
+  if (indexHash) {
+    indexHash.forEach(function (value, key) {
+      if (value.name === serviceName && value.type === serviceType && value.env === serviceEnv) {
         res = key;
       }
     });
