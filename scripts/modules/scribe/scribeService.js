@@ -44,6 +44,7 @@ ScribeService.prototype.addService = function (req, res) {
       params: {
         name: req.body.name,
         type: req.body.type,
+        env: req.body.env,
         metadata: req.body.metadata,
         executors: req.body.executors || [],
       },

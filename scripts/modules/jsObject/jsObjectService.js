@@ -236,6 +236,7 @@ JsObjectService.prototype.findAllService = function (index, type) {
       id: key,
       name: value.name,
       type: value.type,
+      env: value.env,
       metadata: value.metadata,
       executors: value.executors
     });
