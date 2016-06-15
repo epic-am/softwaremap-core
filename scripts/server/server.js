@@ -87,7 +87,6 @@ var Server = function () {
   };
 
   self.start = function () {
-    httpServer.listen(self.port);
     self.server = self.app.listen(self.port, self.ipaddress, function() {
         logger.info("%s: Node server started on %s:%d ...",
             Date(Date.now() ), self.ipaddress, self.port);
