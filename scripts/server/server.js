@@ -11,6 +11,14 @@ var Hub = require("./hub");
 var app = express();
 var httpServer = require("http").Server(app);
 
+var allowCrossDomain = function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+  next();
+};
+
 var __DIR_MODULES__ = "../modules/";
 
 var Server = function () {
@@ -24,6 +32,7 @@ var Server = function () {
   self.initializeServer = function () {
     self.app = app;
     self.app.use(bodyParser.json());
+    app.use(allowCrossDomain);
     self.createRoutes();
     self.app.use(function (req, res) {
       res.status(404);
